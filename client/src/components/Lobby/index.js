@@ -20,7 +20,7 @@ import AddRoundedIcon from "@material-ui/icons/AddRounded";
 import MeetingRoomRoundedIcon from "@material-ui/icons/MeetingRoomRounded";
 import CloseIcon from "@material-ui/icons/Close";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 const theme = createMuiTheme({
   palette: {
     secondary: {
@@ -60,7 +60,9 @@ export default function Lobby() {
   const [message, setMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [roomlist, setRoomlist] = useState([]);
-
+  const history = useHistory();
+  const cookie = document.cookie;
+  const cookieData = JSON.parse(cookie);
   useEffect(() => {
     const cookie = document.cookie;
     const cookieData = JSON.parse(cookie);
@@ -127,7 +129,8 @@ export default function Lobby() {
       setMessage(roomData.message);
       setOpen(true);
     } else {
-      setRoomlist(...roomlist, { room: roomData.room });
+      setRoomlist([...roomlist, { room: roomData.room }]);
+      setOpen(false);
     }
   };
 
@@ -149,9 +152,22 @@ export default function Lobby() {
       setMessage(roomData.message);
       setSnackbarOpen(true);
     } else {
-      // setRoomlist(...roomlist, { room: roomData.room });
-      console.log(roomData);
+      const roomListData = await (
+        await fetch(`http://localhost:3000/room/list`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            token: cookieData.token,
+          },
+        })
+      ).json();
+      setRoomlist(roomListData);
+      setOpen(false);
     }
+  };
+  const handleClickLogout = () => {
+    document.cookie = `${cookieData}; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    history.push("/");
   };
   return (
     <div>
@@ -314,6 +330,12 @@ export default function Lobby() {
               })
             : ""}
         </List>
+        <Button
+          onClick={handleClickLogout}
+          style={{ color: "rgb(255,255,255)" }}
+        >
+          Logout
+        </Button>
       </Box>
     </div>
   );

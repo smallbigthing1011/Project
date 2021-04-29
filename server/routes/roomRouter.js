@@ -18,7 +18,7 @@ router.get("/list", async (req, res) => {
     "room"
   );
   if (subscriptions.length == 0) {
-    res.status(403).json({ message: "There's no room yet!" });
+    res.json({ message: "There is no rooms yet" });
   } else res.json(subscriptions);
 });
 

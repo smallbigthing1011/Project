@@ -1,11 +1,25 @@
+import { IconButton, makeStyles } from "@material-ui/core";
+import PowerSettingsNewRoundedIcon from "@material-ui/icons/PowerSettingsNewRounded";
+import QueuePlayNextRoundedIcon from "@material-ui/icons/QueuePlayNextRounded";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { connect, createLocalTracks } from "twilio-video";
+import { useHistory, useParams } from "react-router-dom";
+import { connect, createLocalTracks, LocalVideoTrack } from "twilio-video";
 
+const useStyles = makeStyles({
+  root: {
+    maxWidth: "90vw",
+    backgroundColor: "rgb(47,49,54)",
+    height: "100vh",
+    maxHeight: "100vh",
+    overflow: "scroll",
+  },
+});
 export default function RoomVideo() {
+  const classes = useStyles();
   const [localTracks, setLocalTracks] = useState([]);
   const [room, setRoom] = useState();
   const { roomcall } = useParams();
+  const history = useHistory();
 
   const cookie = document.cookie;
   const cookieData = JSON.parse(cookie);
@@ -31,7 +45,7 @@ export default function RoomVideo() {
 
     createLocalTracks({
       audio: true,
-      video: { width: 400 },
+      video: { width: 300 },
     })
       .then((localTracks) => {
         setLocalTracks(localTracks);
@@ -98,9 +112,7 @@ export default function RoomVideo() {
 
         // Log Participants as they disconnect from the Room
         room.on("participantDisconnected", (participant) => {
-          console.log(
-            `Participant "${participant.identity}" has disconnected from the Room`
-          );
+          console.log(participant);
         });
         room.on("disconnected", (room) => {
           // Detach the local media elements
@@ -111,27 +123,60 @@ export default function RoomVideo() {
         });
       });
   }, []);
-
+  const screenShare = async () => {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { width: 800 },
+    });
+    const screenTrack = new LocalVideoTrack(stream.getTracks()[0]);
+    room.localParticipant.publishTrack(screenTrack);
+  };
+  const participantDisconnect = () => {
+    room.disconnect();
+    history.push("/channel");
+  };
   return (
-    <div>
-      <button
-        onClick={() => {
-          room.disconnect();
-        }}
+    <div className={classes.root}>
+      <IconButton
+        variant="contained"
+        color="secondary"
+        onClick={participantDisconnect}
       >
-        disconnect
-      </button>
+        <PowerSettingsNewRoundedIcon></PowerSettingsNewRoundedIcon>
+      </IconButton>
+      <IconButton variant="contained" color="secondary" onClick={screenShare}>
+        <QueuePlayNextRoundedIcon></QueuePlayNextRoundedIcon>
+      </IconButton>
       <div
         className="container"
         style={{
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          flexDirection: "column",
         }}
       >
-        <div id="local-media-div" style={{ width: "200px" }}></div>
-
-        <div id="remote-media-div"></div>
+        <div
+          id="remote-media-div"
+          style={{
+            width: "100%",
+            border: "2px solid rgb(255,255,255)",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            minHeight: "300px",
+          }}
+        ></div>
+        <div
+          id="local-media-div"
+          style={{
+            maxWidth: "300px",
+            border: "2px solid rgb(255,255,255)",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        ></div>
       </div>
     </div>
   );
