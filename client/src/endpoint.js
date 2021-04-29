@@ -1,0 +1,2 @@
+const REACT_API_ENDPOINT = process.env.REACT_API_ENDPOINT;
+export default REACT_API_ENDPOINT;

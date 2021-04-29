@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+
+const app = require("../app");
+const http = require("http");
+const mongoose = require("mongoose");
+const server = http.createServer(app);
+const config = require("../config/config");
+
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: [
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Headers",
+    ],
+    // credentials: true,
+  },
+});
+const { initSocket } = require("../helper/socket-io");
+
+mongoose
+  .connect(config.uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Mongoose is connected");
+    initSocket(io);
+    server.listen(config.port, () => {
+      console.log("Server is listenning on port", config.port);
+    });
+  });
